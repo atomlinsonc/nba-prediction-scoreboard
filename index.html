@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA JAM Predictions</title>
+    <meta name="description" content="Rank all 30 NBA teams for the 2026-27 season and see how your predictions stack up against the live standings.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏀</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0b0d17;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            padding: 30px 20px 10px;
+            background: linear-gradient(180deg, #1d1530 0%, #0b0d17 100%);
+        }
+        .header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            letter-spacing: 6px;
+            background: linear-gradient(135deg, #f97316, #fbbf24, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 30px rgba(249, 115, 22, 0.3));
+        }
+        .header .subtitle {
+            font-size: 0.95rem;
+            color: #888;
+            margin-top: 4px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .header .season {
+            font-size: 0.85rem;
+            color: #fbbf24;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        /* ── Tab Navigation ── */
+        .tab-bar {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 20px 20px 0;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: #1a1a33;
+            border: 1px solid #2c2c55;
+            color: #888;
+            padding: 10px 24px;
+            border-radius: 8px 8px 0 0;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: #fff; border-color: #444; }
+        .tab-btn.active {
+            background: #0b0d17;
+            color: #fbbf24;
+            border-color: #fbbf24;
+            border-bottom-color: #0b0d17;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── Refresh ── */
+        .refresh-bar {
+            text-align: center;
+            padding: 16px 20px;
+        }
+        .refresh-btn, .cta-btn {
+            background: linear-gradient(135deg, #f97316, #c2410c);
+            color: #fff;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .refresh-btn:hover, .cta-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(249,115,22,0.4); }
+        .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .last-updated {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 8px;
+        }
+        .status-msg {
+            font-size: 0.85rem;
+            color: #fbbf24;
+            margin-top: 6px;
+            min-height: 1.2em;
+        }
+
+        /* ── Scoreboard ── */
+        .scoreboard {
+            max-width: 700px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .scoreboard-title {
+            text-align: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            letter-spacing: 3px;
+            color: #fbbf24;
+            margin-bottom: 16px;
+        }
+        .preseason-note {
+            text-align: center;
+            color: #fbbf24;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        .cta-wrap { text-align: center; margin: 8px 0 24px; }
+        .player-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #1a1a33, #121226);
+            border: 1px solid #2c2c55;
+            border-radius: 12px;
+            padding: 20px 28px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .player-card.rank-1 {
+            border-color: #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.15);
+        }
+        .player-card.rank-1::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #fbbf24, #f97316);
+        }
+        .player-rank {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.2rem;
+            color: #444;
+            width: 50px;
+        }
+        .player-card.rank-1 .player-rank { color: #fbbf24; }
+        .player-card.rank-2 .player-rank { color: #aaa; }
+        .player-card.rank-3 .player-rank { color: #cd7f32; }
+        .player-info { flex: 1; margin-left: 12px; min-width: 0; }
+        .player-name {
+            font-size: 1.4rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            overflow-wrap: break-word;
+        }
+        .player-breakdown {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        .player-score {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.8rem;
+            letter-spacing: 1px;
+        }
+        .player-card.rank-1 .player-score { color: #4ade80; }
+        .player-card.rank-2 .player-score { color: #94a3b8; }
+        .player-card.rank-3 .player-score { color: #fb923c; }
+        .player-card:not(.rank-1):not(.rank-2):not(.rank-3) .player-score { color: #64748b; }
+        .score-label {
+            font-size: 0.7rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: right;
+        }
+
+        /* ── Standings Detail ── */
+        .standings-section {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .conference-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.6rem;
+            letter-spacing: 3px;
+            color: #fbbf24;
+            text-align: center;
+            margin: 30px 0 16px;
+        }
+        .table-scroll { overflow-x: auto; margin-bottom: 30px; }
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .standings-table thead th {
+            background: #1a1a33;
+            padding: 12px 10px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            border-bottom: 2px solid #2c2c55;
+            white-space: nowrap;
+        }
+        .standings-table tbody td {
+            padding: 10px;
+            border-bottom: 1px solid #1a1a33;
+            font-size: 0.9rem;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .standings-table tbody tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+        .team-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+        }
+        .team-logo {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        .team-name {
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .team-record { color: #888; font-size: 0.8rem; white-space: nowrap; }
+        .seed-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            min-width: 32px;
+        }
+        .accuracy-good { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+        .accuracy-ok { background: rgba(250, 204, 21, 0.15); color: #facc15; }
+        .accuracy-bad { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+
+        /* ── Submit Form ── */
+        .submit-section {
+            max-width: 700px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .form-title {
+            text-align: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            letter-spacing: 3px;
+            color: #fbbf24;
+            margin-bottom: 8px;
+        }
+        .form-subtitle {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #ccc;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #121226;
+            border: 1px solid #2c2c55;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #fbbf24;
+        }
+        .division-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 2px;
+            color: #f97316;
+            margin: 24px 0 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #2c2c55;
+        }
+        .drag-list {
+            list-style: none;
+            counter-reset: rank;
+        }
+        .drag-list li {
+            counter-increment: rank;
+            display: flex;
+            align-items: center;
+            background: #121226;
+            border: 1px solid #2c2c55;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            transition: background 0.15s, border-color 0.15s;
+            user-select: none;
+        }
+        .drag-list li.dragging {
+            opacity: 0.4;
+            border-color: #fbbf24;
+        }
+        .drag-list li.drag-over {
+            border-color: #fbbf24;
+            background: #1a1a33;
+        }
+        .drag-list li::before {
+            content: counter(rank);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            color: #fbbf24;
+            width: 32px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .drag-list .drag-handle {
+            color: #555;
+            margin-right: 10px;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            cursor: grab;
+            touch-action: none;
+            padding: 4px 6px;
+        }
+        .drag-list .drag-handle:active { cursor: grabbing; }
+        .drag-list .team-logo {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+        }
+        .drag-list .team-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 0;
+        }
+        .move-btns { display: flex; gap: 4px; flex-shrink: 0; }
+        .move-btn {
+            background: #1a1a33;
+            border: 1px solid #2c2c55;
+            color: #aaa;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        .move-btn:hover { color: #fbbf24; border-color: #fbbf24; }
+        .move-btn:disabled { opacity: 0.25; cursor: default; }
+        .seed-key {
+            font-size: 0.75rem;
+            color: #666;
+            margin: -6px 0 10px;
+        }
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            margin-top: 30px;
+            background: linear-gradient(135deg, #f97316, #c2410c);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .submit-btn:hover { transform: scale(1.02); box-shadow: 0 0 24px rgba(249,115,22,0.4); }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .submit-status {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 0.9rem;
+            min-height: 1.4em;
+        }
+        .submit-status.success { color: #4ade80; }
+        .submit-status.error { color: #f87171; }
+
+        /* ── Loading ── */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #333;
+            border-top-color: #fbbf24;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: #444;
+            font-size: 0.75rem;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 700px) {
+            .standings-section { padding: 0 8px; }
+            .standings-table { font-size: 0.8rem; }
+            .standings-table thead th { padding: 8px 4px; font-size: 0.65rem; }
+            .standings-table tbody td { padding: 8px 4px; }
+            .team-logo { width: 22px; height: 22px; }
+            .team-name { font-size: 0.8rem; }
+            .player-card { padding: 16px 18px; }
+            .player-score { font-size: 1.9rem; }
+            .player-name { font-size: 1.05rem; }
+            .player-rank { font-size: 1.8rem; width: 40px; }
+            .player-info { margin-left: 4px; margin-right: 8px; }
+            .drag-list li { padding: 6px 8px; }
+            .drag-list .team-label { font-size: 0.8rem; }
+            .tab-btn { padding: 10px 16px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>NBA JAM</h1>
+    <div class="subtitle">Season Prediction Scoreboard</div>
+    <div class="season">2026-27 Season</div>
+</div>
+
+<div class="tab-bar">
+    <button class="tab-btn active" data-tab="standings" onclick="switchTab('standings')">Standings</button>
+    <button class="tab-btn" data-tab="submit" onclick="switchTab('submit')">Submit Predictions</button>
+</div>
+
+<!-- ═══ STANDINGS TAB ═══ -->
+<div class="tab-content active" id="tab-standings">
+    <div class="refresh-bar">
+        <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
+            Refresh Standings
+        </button>
+        <div class="last-updated" id="lastUpdated"></div>
+        <div class="status-msg" id="statusMsg"></div>
+    </div>
+
+    <div class="scoreboard" id="scoreboard">
+        <div class="loading"><div class="spinner"></div><br>Loading scores...</div>
+    </div>
+
+    <div class="standings-section" id="standingsSection">
+        <!-- Populated by JS -->
+    </div>
+</div>
+
+<!-- ═══ SUBMIT TAB ═══ -->
+<div class="tab-content" id="tab-submit">
+    <div class="submit-section">
+        <div class="form-title">Submit Your Predictions</div>
+        <div class="form-subtitle">
+            Rank all 15 teams in each conference, #1 = best record.<br>
+            Drag the &#9776; handle or use the arrows. Submitting again with the same name updates your picks.
+        </div>
+
+        <div class="form-group">
+            <label for="playerNameInput">Your Name</label>
+            <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="30" autocomplete="off">
+        </div>
+
+        <div class="division-label">Eastern Conference</div>
+        <div class="seed-key">Seeds 1-6 make the playoffs &middot; 7-10 play-in</div>
+        <ul class="drag-list" id="eastList"></ul>
+
+        <div class="division-label">Western Conference</div>
+        <div class="seed-key">Seeds 1-6 make the playoffs &middot; 7-10 play-in</div>
+        <ul class="drag-list" id="westList"></ul>
+
+        <button class="submit-btn" id="submitBtn" onclick="submitPredictions()">Submit Predictions</button>
+        <div class="submit-status" id="submitStatus"></div>
+    </div>
+</div>
+
+<div class="footer">
+    NBA JAM Predictions &middot; Standings via ESPN
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// NBA TEAMS — 15 per conference, alphabetical default order
+// ═══════════════════════════════════════════════════════════
+
+const SEASON = 2027; // ESPN labels the 2026-27 season by its ending year
+
+const EAST_TEAMS = [
+    "Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets",
+    "Chicago Bulls", "Cleveland Cavaliers", "Detroit Pistons", "Indiana Pacers",
+    "Miami Heat", "Milwaukee Bucks", "New York Knicks", "Orlando Magic",
+    "Philadelphia 76ers", "Toronto Raptors", "Washington Wizards"
+];
+
+const WEST_TEAMS = [
+    "Dallas Mavericks", "Denver Nuggets", "Golden State Warriors", "Houston Rockets",
+    "LA Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Minnesota Timberwolves",
+    "New Orleans Pelicans", "Oklahoma City Thunder", "Phoenix Suns", "Portland Trail Blazers",
+    "Sacramento Kings", "San Antonio Spurs", "Utah Jazz"
+];
+
+// ESPN logo slugs
+const TEAM_ABBR = {
+    "Atlanta Hawks": "atl", "Boston Celtics": "bos", "Brooklyn Nets": "bkn",
+    "Charlotte Hornets": "cha", "Chicago Bulls": "chi", "Cleveland Cavaliers": "cle",
+    "Detroit Pistons": "det", "Indiana Pacers": "ind", "Miami Heat": "mia",
+    "Milwaukee Bucks": "mil", "New York Knicks": "ny", "Orlando Magic": "orl",
+    "Philadelphia 76ers": "phi", "Toronto Raptors": "tor", "Washington Wizards": "wsh",
+    "Dallas Mavericks": "dal", "Denver Nuggets": "den", "Golden State Warriors": "gs",
+    "Houston Rockets": "hou", "LA Clippers": "lac", "Los Angeles Lakers": "lal",
+    "Memphis Grizzlies": "mem", "Minnesota Timberwolves": "min", "New Orleans Pelicans": "no",
+    "Oklahoma City Thunder": "okc", "Phoenix Suns": "phx", "Portland Trail Blazers": "por",
+    "Sacramento Kings": "sac", "San Antonio Spurs": "sa", "Utah Jazz": "utah"
+};
+
+// Name normalization for ESPN mismatches
+const NAME_NORMALIZE = {
+    "Los Angeles Clippers": "LA Clippers"
+};
+
+function normalizeName(name) {
+    return NAME_NORMALIZE[name] || name;
+}
+
+function teamLogo(teamName) {
+    const abbr = TEAM_ABBR[teamName];
+    if (!abbr) return '';
+    return `https://a.espncdn.com/i/teamlogos/nba/500/${abbr}.png`;
+}
+
+function logoImg(team) {
+    const logo = teamLogo(team);
+    return logo ? `<img class="team-logo" src="${logo}" alt="" onerror="this.style.display='none'">` : '';
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOCAL STORAGE HELPERS (cache only — the API is the source of truth)
+// ═══════════════════════════════════════════════════════════
+
+function lsGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+
+function lsSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) {}
+}
+
+let PLAYERS = {};
+
+function loadPlayers() {
+    const saved = lsGet('nbaHardwoodPlayers');
+    if (saved) {
+        try { PLAYERS = JSON.parse(saved); } catch (e) { PLAYERS = {}; }
+    }
+}
+
+function savePlayers() {
+    lsSet('nbaHardwoodPlayers', JSON.stringify(PLAYERS));
+}
+
+// ═══════════════════════════════════════════════════════════
+// API — Vercel serverless function backed by Vercel Blob
+// ═══════════════════════════════════════════════════════════
+
+const API_URL = '/api';
+
+async function syncFromCloud() {
+    try {
+        const resp = await fetch(`${API_URL}/predictions`, { cache: 'no-store' });
+        if (!resp.ok) throw new Error(`API returned ${resp.status}`);
+        const data = await resp.json();
+        if (data && typeof data === 'object') {
+            PLAYERS = data;
+            savePlayers();
+        }
+    } catch (e) {
+        console.warn('Cloud sync failed, using local data:', e);
+    }
+}
+
+async function syncToCloud(name, east, west) {
+    const resp = await fetch(`${API_URL}/predictions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, east, west })
+    });
+    if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `API returned ${resp.status}`);
+    }
+    // Re-fetch all predictions to get the complete set
+    await syncFromCloud();
+}
+
+// ═══════════════════════════════════════════════════════════
+// STANDINGS FETCHING (ESPN API)
+// ═══════════════════════════════════════════════════════════
+
+let currentStandings = { east: {}, west: {} };
+let teamRecords = {};
+
+async function fetchStandings() {
+    const btn = document.getElementById('refreshBtn');
+    const status = document.getElementById('statusMsg');
+    btn.disabled = true;
+    status.textContent = 'Fetching standings from ESPN...';
+
+    try {
+        const url = `https://site.api.espn.com/apis/v2/sports/basketball/nba/standings?season=${SEASON}&seasontype=2`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`ESPN API returned ${resp.status}`);
+        const data = await resp.json();
+        parseESPN(data);
+
+        status.textContent = hasStandings()
+            ? ''
+            : 'The regular season hasn\'t tipped off yet — get your picks in!';
+    } catch (err) {
+        console.error('ESPN API failed:', err);
+        status.textContent = 'Could not fetch standings. Check your connection and try again.';
+        btn.disabled = false;
+        return;
+    }
+
+    const now = new Date();
+    document.getElementById('lastUpdated').textContent =
+        `Last updated: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+    btn.disabled = false;
+
+    lsSet('nbaHardwoodStandings', JSON.stringify({ standings: currentStandings, records: teamRecords }));
+    lsSet('nbaHardwoodTimestamp', now.toISOString());
+}
+
+function parseESPN(data) {
+    const east = {};
+    const west = {};
+    const records = {};
+    let gamesPlayed = 0;
+
+    for (const conf of data.children || []) {
+        const isEast = conf.abbreviation === 'East' || conf.name.includes('Eastern');
+        const bucket = isEast ? east : west;
+
+        for (const entry of conf.standings.entries) {
+            const teamName = normalizeName(entry.team.displayName);
+            const stat = name => entry.stats.find(s => s.name === name);
+
+            const wins = stat('wins') ? stat('wins').value : 0;
+            const losses = stat('losses') ? stat('losses').value : 0;
+            gamesPlayed += wins + losses;
+
+            const seedStat = stat('playoffSeed');
+            if (seedStat && seedStat.value) bucket[teamName] = seedStat.value;
+
+            records[teamName] = `${wins}-${losses}`;
+        }
+    }
+
+    // Before opening night ESPN returns 0-0 records and no seeds — treat as pre-season
+    currentStandings = gamesPlayed > 0 ? { east, west } : { east: {}, west: {} };
+    teamRecords = records;
+}
+
+function hasStandings() {
+    return Object.keys(currentStandings.east).length > 0;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCORING ENGINE
+// ═══════════════════════════════════════════════════════════
+
+const TEAMS_PER_CONF = 15;
+
+function seedAccuracy(predictedSeed, actualSeed) {
+    const maxDiff = TEAMS_PER_CONF - 1;
+    return ((maxDiff - Math.abs(predictedSeed - actualSeed)) / maxDiff) * 100;
+}
+
+function calcAccuracy(predictedArray, actualStandings) {
+    let sumAccuracy = 0;
+    let counted = 0;
+
+    predictedArray.forEach((team, idx) => {
+        const actualSeed = actualStandings[team];
+        if (actualSeed === undefined) return;
+        sumAccuracy += seedAccuracy(idx + 1, actualSeed);
+        counted++;
+    });
+
+    return counted > 0 ? sumAccuracy / counted : 0;
+}
+
+function getPlayerScores() {
+    const scores = [];
+
+    for (const [name, preds] of Object.entries(PLAYERS)) {
+        const eastAcc = calcAccuracy(preds.east, currentStandings.east);
+        const westAcc = calcAccuracy(preds.west, currentStandings.west);
+        const combined = (eastAcc + westAcc) / 2;
+
+        scores.push({ name, east: eastAcc, west: westAcc, combined });
+    }
+
+    scores.sort((a, b) => b.combined - a.combined);
+    return scores;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════════
+
+function renderAll() {
+    renderScoreboard();
+    renderStandings();
+}
+
+function renderScoreboard() {
+    const container = document.getElementById('scoreboard');
+    const playerNames = Object.keys(PLAYERS);
+    const cta = `<div class="cta-wrap"><button class="cta-btn" onclick="switchTab('submit')">Make Your Picks</button></div>`;
+
+    if (playerNames.length === 0) {
+        container.innerHTML = '<div class="loading">No predictions submitted yet. Be the first!</div>' + cta;
+        return;
+    }
+
+    if (!hasStandings()) {
+        // Pre-season: show who has submitted predictions, no scores yet
+        let html = '<div class="scoreboard-title">Predictions Submitted</div>';
+        html += '<div class="preseason-note">The regular season hasn\'t started yet. Scores will appear after opening night!</div>';
+        html += cta;
+
+        playerNames
+            .sort((a, b) => (PLAYERS[a].submittedAt || '').localeCompare(PLAYERS[b].submittedAt || ''))
+            .forEach((name, i) => {
+                const submitted = PLAYERS[name].submittedAt ? new Date(PLAYERS[name].submittedAt).toLocaleDateString() : '';
+                html += `
+                <div class="player-card">
+                    <div class="player-rank">${i + 1}</div>
+                    <div class="player-info">
+                        <div class="player-name">${escapeHtml(name)}</div>
+                        <div class="player-breakdown">Submitted${submitted ? ' ' + submitted : ''}</div>
+                    </div>
+                    <div>
+                        <div class="player-score" style="font-size:1rem;color:#888;">—</div>
+                        <div class="score-label">Waiting</div>
+                    </div>
+                </div>`;
+            });
+
+        container.innerHTML = html;
+        return;
+    }
+
+    const scores = getPlayerScores();
+
+    let html = '<div class="scoreboard-title">Leaderboard</div>';
+
+    scores.forEach((p, i) => {
+        const rank = i + 1;
+        const rankClass = rank <= 3 ? `rank-${rank}` : '';
+        html += `
+        <div class="player-card ${rankClass}">
+            <div class="player-rank">#${rank}</div>
+            <div class="player-info">
+                <div class="player-name">${escapeHtml(p.name)}</div>
+                <div class="player-breakdown">East: ${p.east.toFixed(1)}% &middot; West: ${p.west.toFixed(1)}%</div>
+            </div>
+            <div>
+                <div class="player-score">${p.combined.toFixed(1)}%</div>
+                <div class="score-label">Accuracy</div>
+            </div>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function renderStandings() {
+    const container = document.getElementById('standingsSection');
+    const playerNames = Object.keys(PLAYERS);
+
+    if (playerNames.length === 0 || !hasStandings()) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+
+    ['east', 'west'].forEach(conf => {
+        const confLabel = conf === 'east' ? 'Eastern Conference' : 'Western Conference';
+
+        const actualTeams = Object.entries(currentStandings[conf])
+            .sort((a, b) => a[1] - b[1]);
+
+        html += `<div class="conference-title">${confLabel}</div>`;
+        html += `<div class="table-scroll"><table class="standings-table"><thead><tr>
+            <th style="text-align:left;padding-left:14px">Seed</th>
+            <th style="text-align:left">Team</th>`;
+
+        playerNames.forEach(name => {
+            html += `<th>${escapeHtml(name)}</th>`;
+        });
+
+        html += `</tr></thead><tbody>`;
+
+        actualTeams.forEach(([team, actualSeed]) => {
+            html += `<tr>
+                <td style="text-align:left;padding-left:14px;font-weight:700;color:#fbbf24;">${actualSeed}</td>
+                <td><div class="team-cell">${logoImg(team)}<span class="team-name">${team}</span>
+                    <span class="team-record">${teamRecords[team] || ''}</span></div></td>`;
+
+            playerNames.forEach(player => {
+                const preds = PLAYERS[player][conf] || [];
+                const predictedSeed = preds.indexOf(team) + 1;
+
+                let cls = '';
+                if (predictedSeed > 0) {
+                    const accuracy = seedAccuracy(predictedSeed, actualSeed);
+                    if (accuracy >= 78.5) cls = 'accuracy-good';
+                    else if (accuracy >= 57.1) cls = 'accuracy-ok';
+                    else cls = 'accuracy-bad';
+                }
+
+                html += `<td><span class="seed-badge ${cls}">${predictedSeed || '?'}</span></td>`;
+            });
+
+            html += `</tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════════
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.tab === tab));
+    document.querySelectorAll('.tab-content').forEach(tc =>
+        tc.classList.toggle('active', tc.id === `tab-${tab}`));
+    window.scrollTo({ top: 0 });
+}
+
+// ═══════════════════════════════════════════════════════════
+// RANKING LISTS (drag handle + arrow buttons)
+// ═══════════════════════════════════════════════════════════
+
+function initDragList(listId, teams) {
+    const ul = document.getElementById(listId);
+    ul.innerHTML = '';
+
+    teams.forEach(team => {
+        const li = document.createElement('li');
+        li.dataset.team = team;
+
+        li.innerHTML = `
+            <span class="drag-handle" draggable="true" title="Drag to reorder">&#9776;</span>
+            ${logoImg(team)}
+            <span class="team-label">${team}</span>
+            <span class="move-btns">
+                <button type="button" class="move-btn" aria-label="Move ${team} up">&#9650;</button>
+                <button type="button" class="move-btn" aria-label="Move ${team} down">&#9660;</button>
+            </span>
+        `;
+
+        const handle = li.querySelector('.drag-handle');
+        const [upBtn, downBtn] = li.querySelectorAll('.move-btn');
+        upBtn.addEventListener('click', () => moveItem(li, -1));
+        downBtn.addEventListener('click', () => moveItem(li, 1));
+
+        // Mouse drag (started from the handle)
+        handle.addEventListener('dragstart', handleDragStart);
+        handle.addEventListener('dragend', handleDragEnd);
+        li.addEventListener('dragover', handleDragOver);
+        li.addEventListener('dragenter', handleDragEnter);
+        li.addEventListener('dragleave', handleDragLeave);
+        li.addEventListener('drop', handleDrop);
+
+        // Touch drag on the handle only, so the rest of the row still scrolls the page
+        handle.addEventListener('touchstart', handleTouchStart, { passive: false });
+        handle.addEventListener('touchmove', handleTouchMove, { passive: false });
+        handle.addEventListener('touchend', handleTouchEnd);
+        handle.addEventListener('touchcancel', handleTouchEnd);
+
+        ul.appendChild(li);
+    });
+
+    updateMoveButtons(ul);
+}
+
+function moveItem(li, dir) {
+    const list = li.parentNode;
+    if (dir < 0 && li.previousElementSibling) {
+        list.insertBefore(li, li.previousElementSibling);
+    } else if (dir > 0 && li.nextElementSibling) {
+        list.insertBefore(li.nextElementSibling, li);
+    }
+    updateMoveButtons(list);
+}
+
+function updateMoveButtons(list) {
+    const items = [...list.children];
+    items.forEach((li, i) => {
+        const [upBtn, downBtn] = li.querySelectorAll('.move-btn');
+        upBtn.disabled = i === 0;
+        downBtn.disabled = i === items.length - 1;
+    });
+}
+
+function placeItem(item, target) {
+    const list = target.parentNode;
+    const items = [...list.children];
+    if (items.indexOf(item) < items.indexOf(target)) {
+        list.insertBefore(item, target.nextSibling);
+    } else {
+        list.insertBefore(item, target);
+    }
+    updateMoveButtons(list);
+}
+
+let dragSrcEl = null;
+
+function handleDragStart(e) {
+    dragSrcEl = this.closest('li');
+    dragSrcEl.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+    e.dataTransfer.setDragImage(dragSrcEl, 20, 20);
+}
+
+function handleDragEnd() {
+    if (dragSrcEl) dragSrcEl.classList.remove('dragging');
+    document.querySelectorAll('.drag-list li').forEach(li => li.classList.remove('drag-over'));
+    dragSrcEl = null;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+    e.preventDefault();
+    if (dragSrcEl && this !== dragSrcEl && this.parentNode === dragSrcEl.parentNode) {
+        this.classList.add('drag-over');
+    }
+}
+
+function handleDragLeave() {
+    this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragSrcEl && this !== dragSrcEl && this.parentNode === dragSrcEl.parentNode) {
+        placeItem(dragSrcEl, this);
+    }
+    this.classList.remove('drag-over');
+}
+
+// ── Touch support for mobile ──
+let touchEl = null;
+let touchClone = null;
+
+function handleTouchStart(e) {
+    e.preventDefault();
+    touchEl = this.closest('li');
+    touchEl.classList.add('dragging');
+
+    // Create floating clone
+    touchClone = touchEl.cloneNode(true);
+    touchClone.style.position = 'fixed';
+    touchClone.style.zIndex = '9999';
+    touchClone.style.pointerEvents = 'none';
+    touchClone.style.opacity = '0.85';
+    touchClone.style.width = touchEl.offsetWidth + 'px';
+    touchClone.style.left = touchEl.getBoundingClientRect().left + 'px';
+    touchClone.style.top = e.touches[0].clientY - 20 + 'px';
+    document.body.appendChild(touchClone);
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    if (!touchEl || !touchClone) return;
+
+    const y = e.touches[0].clientY;
+    touchClone.style.top = y - 20 + 'px';
+
+    [...touchEl.parentNode.children].forEach(item => {
+        const rect = item.getBoundingClientRect();
+        item.classList.toggle('drag-over', item !== touchEl && y > rect.top && y < rect.bottom);
+    });
+}
+
+function handleTouchEnd() {
+    if (!touchEl) return;
+    touchEl.classList.remove('dragging');
+
+    if (touchClone) {
+        touchClone.remove();
+        touchClone = null;
+    }
+
+    const target = [...touchEl.parentNode.children].find(item => item.classList.contains('drag-over'));
+    if (target) {
+        placeItem(touchEl, target);
+        target.classList.remove('drag-over');
+    }
+
+    touchEl = null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SUBMIT PREDICTIONS
+// ═══════════════════════════════════════════════════════════
+
+async function submitPredictions() {
+    const nameInput = document.getElementById('playerNameInput');
+    const statusEl = document.getElementById('submitStatus');
+    const btn = document.getElementById('submitBtn');
+
+    const name = nameInput.value.trim();
+
+    if (!name) {
+        statusEl.textContent = 'Please enter your name.';
+        statusEl.className = 'submit-status error';
+        nameInput.focus();
+        return;
+    }
+
+    if (name.length > 30) {
+        statusEl.textContent = 'Name must be 30 characters or fewer.';
+        statusEl.className = 'submit-status error';
+        return;
+    }
+
+    // Get ordered teams from the ranking lists
+    const eastPreds = [...document.getElementById('eastList').children].map(li => li.dataset.team);
+    const westPreds = [...document.getElementById('westList').children].map(li => li.dataset.team);
+
+    if (eastPreds.length !== 15 || westPreds.length !== 15) {
+        statusEl.textContent = 'Something went wrong. Please refresh and try again.';
+        statusEl.className = 'submit-status error';
+        return;
+    }
+
+    btn.disabled = true;
+    statusEl.textContent = 'Submitting...';
+    statusEl.className = 'submit-status';
+
+    try {
+        await syncToCloud(name, eastPreds, westPreds);
+        statusEl.textContent = `Predictions saved for ${name}! Switch to the Standings tab to see the scoreboard.`;
+        statusEl.className = 'submit-status success';
+        lsSet('nbaHardwoodMyName', name);
+    } catch (e) {
+        statusEl.textContent = `Failed to save: ${e.message}. Please try again.`;
+        statusEl.className = 'submit-status error';
+    }
+
+    btn.disabled = false;
+    renderAll();
+}
+
+// Load a previous submission back into the form so it can be edited
+function prefillFromName(name) {
+    const preds = PLAYERS[name];
+    if (!preds) return;
+    initDragList('eastList', preds.east);
+    initDragList('westList', preds.west);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+
+async function refreshAll() {
+    await Promise.all([fetchStandings(), syncFromCloud()]);
+    renderAll();
+}
+
+(async function init() {
+    loadPlayers();
+
+    initDragList('eastList', EAST_TEAMS);
+    initDragList('westList', WEST_TEAMS);
+
+    // Show cached standings instantly while fresh data loads
+    const cached = lsGet('nbaHardwoodStandings');
+    const timestamp = lsGet('nbaHardwoodTimestamp');
+    if (cached) {
+        try {
+            const parsed = JSON.parse(cached);
+            currentStandings = parsed.standings;
+            teamRecords = parsed.records || {};
+            if (timestamp) {
+                const d = new Date(timestamp);
+                document.getElementById('lastUpdated').textContent =
+                    `Last updated: ${d.toLocaleDateString()} ${d.toLocaleTimeString()} (cached)`;
+            }
+        } catch (e) {
+            console.warn('Could not load cached standings', e);
+        }
+    }
+    renderAll();
+
+    await refreshAll();
+
+    // Returning visitor: remember their name and load their picks for editing
+    const myName = lsGet('nbaHardwoodMyName');
+    const nameInput = document.getElementById('playerNameInput');
+    if (myName && PLAYERS[myName]) {
+        nameInput.value = myName;
+        prefillFromName(myName);
+    }
+    nameInput.addEventListener('change', () => prefillFromName(nameInput.value.trim()));
+
+    // Pre-season with nobody signed up yet: land people on the picks form
+    if (!hasStandings() && Object.keys(PLAYERS).length === 0) switchTab('submit');
+})();
+</script>
+
+</body>
+</html>

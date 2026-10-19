@@ -1,0 +1,10 @@
+{
+  "name": "nba-prediction-scoreboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NBA 2026-27 season prediction scoreboard",
+  "type": "module",
+  "dependencies": {
+    "@vercel/blob": "2.8.2"
+  }
+}
